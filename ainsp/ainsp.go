@@ -60,14 +60,14 @@ var (
 
 // Inspect method processes the Go source code for the given directory and its
 // sub-directories.
-func Inspect(path string, excludes ess.Excludes, registeredActions map[string]map[string]uint8) (*Program, []error) {
+func Inspect(dir, importPath string, excludes ess.Excludes, registeredActions map[string]map[string]uint8) (*Program, []error) {
 	prg := &Program{
-		Path:              path,
+		Path:              dir,
 		Packages:          []*packageInfo{},
 		RegisteredActions: registeredActions,
 	}
 
-	if err := validateInput(path); err != nil {
+	if err := validateInput(dir); err != nil {
 		return prg, append([]error{}, err)
 	}
 
@@ -76,7 +76,7 @@ func Inspect(path string, excludes ess.Excludes, registeredActions map[string]ma
 		errs []error
 	)
 
-	err := ess.Walk(path, func(srcPath string, info os.FileInfo, err error) error {
+	err := ess.Walk(dir, func(srcPath string, info os.FileInfo, err error) error {
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -123,7 +123,7 @@ func Inspect(path string, excludes ess.Excludes, registeredActions map[string]ma
 		if pkg != nil {
 			pkg.Fset = pfset
 			pkg.FilePath = srcPath
-			pkg.ImportPath = stripGoPath(srcPath)
+			pkg.ImportPath = inferImportPath(dir, importPath, srcPath)
 			prg.Packages = append(prg.Packages, pkg)
 		}
 

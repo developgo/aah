@@ -69,6 +69,15 @@ func stripGoPath(pkgFilePath string) string {
 	return filepath.Clean(pkgFilePath[idx+4:])
 }
 
+func inferImportPath(dir, importPath, srcPath string) string {
+	if dir == srcPath && ess.IsFileExists("go.mod") {
+		i := strings.LastIndex(srcPath, "app")
+		return filepath.Clean(filepath.ToSlash(path.Join(importPath, srcPath[i:])))
+	}
+	i := strings.Index(srcPath, "src")
+	return filepath.Clean(srcPath[i+4:])
+}
+
 func isPkgAliasExists(importPaths map[string]string, pkgAlias string) bool {
 	_, found := importPaths[pkgAlias]
 	return found
@@ -133,6 +142,7 @@ func processMethods(pkg *packageInfo, routeMethods map[string]map[string]uint8, 
 	if ty := pkg.Types[controllerName]; ty == nil {
 		pos := pkg.Fset.Position(decl.Pos())
 		filename := stripGoPath(pos.Filename)
+		fmt.Println("filename", filename, "pos.Filename", pos.Filename)
 		log.Errorf("AST: Method '%s' has incorrect struct recevier '%s' on file [%s] at line #%d",
 			actionName, controllerName, filename, pos.Line)
 	} else {
